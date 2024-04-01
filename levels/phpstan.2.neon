@@ -1,0 +1,48 @@
+# Configuration file for PHPStan static code checking, see https://phpstan.org .
+# PHPStan is triggered on Drupal CI in commit-code-check.sh.
+includes:
+  - .phpstan-baseline.php
+  - phar://phpstan.phar/conf/bleedingEdge.neon
+
+parameters:
+
+  level: 2
+
+  fileExtensions:
+    - sh
+
+  paths:
+    - core
+    - composer
+
+  bootstrapFiles:
+    # Load aliases.
+    - core/lib/Drupal/Core/Serialization/Yaml.php
+
+  excludePaths:
+    # Don't analyze PHPStan's automatically generated baseline.
+    - .phpstan-baseline.php
+    # Skip sites directory.
+    - sites
+    # Skip test fixtures.
+    - */node_modules/*
+    - core/*/tests/fixtures/*.php
+    - core/*/tests/fixtures/*.php.gz
+    # Skip Drupal 6 & 7 code.
+    - core/scripts/dump-database-d?.sh
+    - core/scripts/generate-d?-content.sh
+    # Skip data files.
+    - core/lib/Drupal/Component/Transliteration/data/*.php
+    # Below extends on purpose a non existing class for testing.
+    - core/modules/system/tests/modules/plugin_test/src/Plugin/plugin_test/fruit/ExtendingNonInstalledClass.php
+    - core/modules/system/tests/modules/plugin_test/src/Plugin/plugin_test/custom_annotation/UsingNonInstalledTraitClass.php
+    - core/modules/system/tests/modules/plugin_test/src/Plugin/plugin_test/custom_annotation/ExtendingNonInstalledClass.php
+
+  ignoreErrors:
+    # new static() is a best practice in Drupal, so we cannot fix that.
+    - "#^Unsafe usage of new static#"
+
+    # Ignore common errors for now.
+    - "#Drupal calls should be avoided in classes, use dependency injection instead#"
+    - "#^Plugin definitions cannot be altered.#"
+    - "#^Class .* extends @internal class#"

@@ -1,17 +1,13 @@
 #!/usr/bin/env php
 <?php
 
-$options = ['--unclassified', '--csv'];
+$options = ['--unclassified', '--csv', '--quiet'];
 
 $exit_with_usage = static function () use ($argv, $options) : never {
   $option_help = implode(" ", array_map(fn (string $o) => "[$o]", $options));
   fwrite(STDERR, "Usage: {$argv[0]} {$option_help} <baseline>" . PHP_EOL);
   exit(1);
 };
-
-if ($argc === 1) {
-
-}
 
 $provided_options = [];
 $provided_arguments = [];
@@ -35,8 +31,8 @@ if (count($provided_arguments) !== 1) {
 
 $print_unclassified = isset($provided_options['unclassified']);
 $print_csv = isset($provided_options['csv']);
-$silent = FALSE;
-$progress = TRUE;
+$quiet = isset($provided_options['quiet']);
+$progress = !$quiet;
 
 if ($print_unclassified && $print_csv) {
   fwrite(STDERR, "Can not print unclassified when outputting as CSV." . PHP_EOL . PHP_EOL);
@@ -66,7 +62,7 @@ $ignoredErrors = $baseline['parameters']['ignoreErrors'];
 $ignoredErrorCount = count($ignoredErrors);
 fwrite($print_csv ? STDERR : STDOUT, "Analysing {$ignoredErrorCount} ignored PHPStan errors" . PHP_EOL);
 
-$errorClassification = require_once './classification.php';
+$errorClassification = require_once __DIR__ . '/classification.php';
 
 $unclassified = 0;
 $unclassified_messages = [];
@@ -183,7 +179,7 @@ for ($i = 0; $i < $ignoredErrorCount; $i++) {
   }
 }
 
-if (!$silent) {
+if (!$quiet) {
   fwrite($print_csv ? STDERR : STDOUT, PHP_EOL . PHP_EOL);
   foreach ($errorClassification as $error) {
     fwrite($print_csv ? STDERR : STDOUT, "{$error['count']}\t{$error['message']}" . PHP_EOL);
@@ -194,7 +190,7 @@ if (!$silent) {
 
 
 if ($print_csv) {
-  fputcsv(STDOUT, array_keys($errorClassification));
+  fputcsv(STDOUT, array_column($errorClassification, 'message'));
   fputcsv(STDOUT, array_column($errorClassification, 'count'));
 }
 

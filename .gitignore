@@ -1,0 +1,4 @@
+# Create a workdir that isn't tracked by git.
+/workdir/
+
+/vendor/
